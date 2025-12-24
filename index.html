@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Certificate Verification - BOSSH-TC</title>
+
+  <style>
+    :root {
+      --light-green: #e8f5e9;
+      --medium-green: #a5d6a7;
+      --dark-green: #388e3c;
+      --light-grey: #f5f5f5;
+      --grey: #e0e0e0;
+      --text-dark: #333;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, var(--light-grey) 0%, #ffffff 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: var(--text-dark);
+    }
+
+    .container {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      padding: 40px 30px;
+      width: 100%;
+      max-width: 480px;
+      text-align: center;
+    }
+
+    h1 {
+      color: var(--dark-green);
+      margin-bottom: 12px;
+      font-size: 2.1rem;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 32px;
+      font-size: 1.05rem;
+    }
+
+    .form-group {
+      margin-bottom: 24px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      color: #444;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid var(--grey);
+      border-radius: 10px;
+      font-size: 1.1rem;
+      transition: all 0.2s;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      border-color: var(--medium-green);
+      box-shadow: 0 0 0 3px rgba(165, 214, 167, 0.3);
+    }
+
+    button {
+      background: var(--dark-green);
+      color: white;
+      border: none;
+      padding: 14px 32px;
+      font-size: 1.1rem;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s;
+      font-weight: 600;
+    }
+
+    button:hover {
+      background: #2e7d32;
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(56, 142, 60, 0.25);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    /* Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      padding: 20px;
+    }
+
+    .modal-content {
+      background: white;
+      border-radius: 16px;
+      max-width: 460px;
+      width: 100%;
+      padding: 32px 28px;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+      position: relative;
+      animation: modalFadeIn 0.4s ease-out;
+    }
+
+    @keyframes modalFadeIn {
+      from { opacity: 0; transform: translateY(30px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal h2 {
+      margin-bottom: 16px;
+      font-size: 1.6rem;
+    }
+
+    .success { color: var(--dark-green); }
+    .error   { color: #d32f2f; }
+
+    .details {
+      background: var(--light-green);
+      padding: 16px;
+      border-radius: 10px;
+      margin: 20px 0;
+      text-align: left;
+      font-size: 1.05rem;
+      line-height: 1.5;
+    }
+
+    .close-btn {
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 2rem;
+      color: #888;
+      cursor: pointer;
+      line-height: 1;
+    }
+
+    .close-btn:hover {
+      color: #333;
+    }
+
+    footer {
+      margin-top: 32px;
+      font-size: 0.9rem;
+      color: #777;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Certificate Verification</h1>
+    <p class="subtitle">Enter your certificate number to verify authenticity</p>
+
+    <form id="verifyForm">
+      <div class="form-group">
+        <label for="certNumber">Certificate Number</label>
+        <input 
+          type="text" 
+          id="certNumber" 
+          placeholder="e.g. BOSSH-2025-123456" 
+          required
+          autocomplete="off"
+        />
+      </div>
+
+      <button type="submit">Verify Certificate</button>
+    </form>
+
+    <footer>BINNAF OCCUPATIONAL SAFETY AND HEALTH TRAINING CENTRE LTD<br>RC: 8722202026</footer>
+  </div>
+
+  <!-- Modal -->
+  <div id="resultModal" class="modal">
+    <div class="modal-content">
+      <span class="close-btn" id="closeModal">&times;</span>
+      <h2 id="modalTitle">Verification Result</h2>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('verifyForm');
+    const modal = document.getElementById('resultModal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const closeBtn = document.getElementById('closeModal');
+
+    // Simulated database (replace with real API fetch later)
+    const fakeDatabase = {
+      "BOSSH-2025-001": {
+        name: "Aisha Muhammad",
+        course: "BOSSH Level 3 Award in Occupational Health & Safety",
+        issueDate: "15 November 2025",
+        expiryDate: "14 November 2028",
+        status: "Valid"
+      },
+      "BOSSH-2025-007": {
+        name: "Kabir Ibrahim",
+        course: "NEBOSH IGC Equivalent – BOSSH-TC",
+        issueDate: "10 December 2025",
+        expiryDate: "09 December 2028",
+        status: "Valid"
+      },
+      "BOSSH-2024-999": {
+        name: "Fatima Yusuf",
+        course: "First Aid at Work",
+        issueDate: "05 March 2024",
+        expiryDate: "04 March 2027",
+        status: "Valid"
+      }
+    };
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const certNum = document.getElementById('certNumber').value.trim().toUpperCase();
+      
+      modal.style.display = 'flex';
+
+      if (fakeDatabase[certNum]) {
+        const info = fakeDatabase[certNum];
+        modalTitle.textContent = "Certificate Verified";
+        modalTitle.className = "success";
+        modalBody.innerHTML = `
+          <div class="details">
+            <strong>Holder:</strong> ${info.name}<br>
+            <strong>Course:</strong> ${info.course}<br>
+            <strong>Issue Date:</strong> ${info.issueDate}<br>
+            <strong>Expiry Date:</strong> ${info.expiryDate}<br>
+            <strong>Status:</strong> <span style="color: var(--dark-green); font-weight: bold;">${info.status}</span>
+          </div>
+          <p style="margin-top: 16px; color: #555;">This certificate is authentic and was issued by BOSSH-TC.</p>
+        `;
+      } else {
+        modalTitle.textContent = "No Record Found";
+        modalTitle.className = "error";
+        modalBody.innerHTML = `
+          <p style="font-size: 1.1rem; margin: 20px 0;">
+            The certificate number <strong>${certNum}</strong> could not be found in our records.
+          </p>
+          <p style="color: #666;">
+            Please check the number and try again.<br>
+            If you believe this is an error, contact verification@boshtc.org
+          </p>
+        `;
+      }
+    });
+
+    // Close modal
+    closeBtn.onclick = () => modal.style.display = 'none';
+    window.onclick = (e) => {
+      if (e.target === modal) modal.style.display = 'none';
+    };
+
+    // Optional: clear input on modal close
+    modal.addEventListener('hidden', () => {
+      form.reset();
+    });
+  </script>
+
+</body>
+</html>
